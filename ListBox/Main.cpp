@@ -1,10 +1,9 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include<Windows.h>
-#include<stdio.h>
+#include<cstdio>
 #include"resource.h"
 
-//g_ - Global
-CONST CHAR* g_VALUES[] = { "This", "is", "my", "first", "Combo", "Box" };
+CONST CHAR* g_VALUES[] = { "this", "is", "my", "first", "list", "box" };
 
 BOOL CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -22,30 +21,26 @@ BOOL CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		HICON hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON1));
 		SendMessage(hwnd, WM_SETICON, 0, (LPARAM)hIcon);
-		//WM_ - WindowMessage
 
-		HWND hCombo = GetDlgItem(hwnd, IDC_COMBO);
-		//GetDlgItem(HWND, RESOURCE_ID); возвращает hwnd дочернего окна по ID его ресурса.
+		HWND hList = GetDlgItem(hwnd, IDC_LIST1);
 		for (int i = 0; i < sizeof(g_VALUES) / sizeof(g_VALUES[0]); i++)
 		{
-			SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)g_VALUES[i]);
-			//CB_ - ComboBox
+			SendMessage(hList, LB_ADDSTRING, 0, (LPARAM)g_VALUES[i]);
 		}
-		SendMessage(hCombo, CB_SETCURSEL, 0, 0);
 	}
-	break;
+		break;
 	case WM_COMMAND:
 		switch (LOWORD(wParam))
 		{
 		case IDOK:
 		{
 			CONST INT SIZE = 256;
-			CHAR sz_buffer[SIZE]{};	//sz_ - String Zero (NULL-TerminateLine)
-			HWND hCombo = GetDlgItem(hwnd, IDC_COMBO);
-			INT i = SendMessage(hCombo, CB_GETCURSEL, 0, 0);
-			
-			SendMessage(hCombo, CB_GETLBTEXT, i, (LPARAM)sz_buffer);
-			
+			CHAR sz_buffer[SIZE]{};	
+			HWND hList = GetDlgItem(hwnd, IDC_LIST1);
+			INT i = SendMessage(hList, LB_GETCURSEL, 0, 0);
+
+			SendMessage(hList, LB_GETTEXT, i, (LPARAM)sz_buffer);
+
 
 			CHAR sz_message[SIZE]{};
 			sprintf(sz_message, "Вы выбрали пункт №%i со значением\"%s\".", i, sz_buffer);
@@ -53,12 +48,14 @@ BOOL CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			MessageBox(hwnd, sz_message, "Info", MB_OK | MB_ICONINFORMATION);
 		}
 		break;
-		case IDCANCEL: EndDialog(hwnd, 0); break;
+	case IDCANCEL:
+		EndDialog(hwnd, 0);
+			break;
 		}
 		break;
 	case WM_CLOSE:
 		EndDialog(hwnd, 0);
 		break;
 	}
-	return FALSE;
-}
+	return 0;
+} 
