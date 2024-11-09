@@ -1,4 +1,6 @@
 #include<Windows.h>
+#include<iostream>
+#include<cstdio>
 
 CONST CHAR g_sz_MY_WINDOW_CLASS[] = "My Window";	//Имя класса окна
 
@@ -32,14 +34,29 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst, LPSTR lpCmdLine, IN
 	}
 
 	//2) Создаение окна:
+	AllocConsole();
+	freopen("CONOUT$", "w", stdout);
+
+	INT screen_width = GetSystemMetrics(SM_CXSCREEN);
+	INT screen_heght = GetSystemMetrics(SM_CYSCREEN);
+
+	printf("Screen:\t %ix%i;\n", screen_width, screen_heght);
+
+	INT window_width = screen_width * 3 / 4;
+	INT window_heght = screen_heght * .75;
+	printf("Window:\t %ix%i;\n", window_width, window_heght);
+	INT window_start_x = screen_width / 8;
+	INT window_start_y = screen_heght / 8;
+	printf("Location:\t %ix%i;\n", window_start_x, window_start_y);
+
 	HWND hwnd = CreateWindowEx
 	(
 		NULL,		//ExStyles
 		g_sz_MY_WINDOW_CLASS,	//Class name
 		g_sz_MY_WINDOW_CLASS,	//Window title
 		WS_OVERLAPPEDWINDOW,	//Window style
-		CW_USEDEFAULT, CW_USEDEFAULT,	//Window position
-		CW_USEDEFAULT, CW_USEDEFAULT,	//Window size
+		window_start_x, window_start_y,	//Window position
+		window_width, window_heght,	//Window size
 		NULL,	//Parent Window
 		NULL,	//Main menu ResourceID for MainWindow or ResourceID for ChildWindow
 		hInstance,
@@ -59,12 +76,35 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst, LPSTR lpCmdLine, IN
 
 	return msg.message;
 }
-
+//
 INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{
 	case WM_CREATE:
+		break;
+	case WM_MOVE:
+	case WM_SIZE:
+	{
+		RECT rect;
+		GetWindowRect(hwnd, &rect);
+		INT window_width = rect.right - rect.left;
+		INT window_heght = rect.bottom - rect.top;
+		CONST INT SIZE = 256;
+		CHAR sz_title[SIZE]{};
+		sprintf
+		(
+			sz_title,
+			"%s - Position: %ixi%; Size: %ix%i",
+			g_sz_MY_WINDOW_CLASS,
+			rect.left, rect.top,
+			window_width,window_heght
+		);
+
+		SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM)sz_title);
+		printf(sz_title);
+		printf("\n");
+	}
 		break;
 	case WM_COMMAND:
 		break;
