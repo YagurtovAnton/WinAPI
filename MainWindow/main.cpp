@@ -2,6 +2,7 @@
 #include<iostream>
 #include<cstdio>
 #include"resource.h"
+
 CONST CHAR g_sz_MY_WINDOW_CLASS[] = "My Window";	//Имя класса окна
 
 INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -79,8 +80,9 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst, LPSTR lpCmdLine, IN
 	MSG msg;	//Создаем сообщение
 	while (GetMessage(&msg, NULL, 0, 0) > 0)
 	{
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
+		//TranslateMessage(&msg);
+		//DispatchMessage(&msg);
+		IsDialogMessage(hwnd, &msg);//TAB - переключение окнами
 	}
 
 	return msg.message;
@@ -91,6 +93,45 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	switch (uMsg)
 	{
 	case WM_CREATE:
+		CreateWindowEx
+		(
+			NULL,
+			"Static",
+			"Это подпись создана припомощи CreatWindowsEx()",
+			WS_CHILDWINDOW | WS_VISIBLE|WS_TABSTOP,
+			10, 10,
+			500, 25,
+			hwnd,
+			(HMENU)IDC_STATIC,
+			GetModuleHandle(NULL),
+			NULL
+		);
+		CreateWindowEx
+		(
+			NULL,
+			"Edit",
+			"",
+			WS_CHILD | WS_VISIBLE | WS_BORDER|WS_TABSTOP,
+			10, 48,
+			420, 25,
+			hwnd,
+			(HMENU)IDC_EDIT,
+			GetModuleHandle(NULL),
+			NULL
+		);
+		CreateWindowEx
+		(
+			NULL,
+			"Button",
+			"Применить",
+			WS_CHILD | WS_VISIBLE| WS_TABSTOP,
+			275, 85,
+			150, 32,
+			hwnd,
+			(HMENU)IDC_BATTON,
+			GetModuleHandle(NULL),
+			NULL
+		);
 		break;
 	case WM_MOVE:
 	case WM_SIZE:
@@ -116,6 +157,20 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 		break;
 	case WM_COMMAND:
+		switch (LOWORD(wParam))
+		{
+		case IDC_BATTON:
+
+			CONST INT SIZE = 256;
+			CHAR cz_buffer[SIZE]{};
+			HWND hStatic = GetDlgItem(hwnd, IDC_STATIC);
+			HWND hEdit = GetDlgItem(hwnd, IDC_EDIT);
+			SendMessage(hEdit, WM_GETTEXT, SIZE, (LPARAM)cz_buffer);
+			SendMessage(hStatic, WM_SETTEXT, 0, (LPARAM)cz_buffer);
+			SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM)cz_buffer);
+			SendMessage(GetDlgItem(hwnd,IDC_BATTON), WM_SETTEXT, 0, (LPARAM)cz_buffer);
+			break;
+		}
 		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
