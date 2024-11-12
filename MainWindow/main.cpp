@@ -1,7 +1,7 @@
 #include<Windows.h>
 #include<iostream>
 #include<cstdio>
-
+#include"resource.h"
 CONST CHAR g_sz_MY_WINDOW_CLASS[] = "My Window";	//Имя класса окна
 
 INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -17,10 +17,19 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst, LPSTR lpCmdLine, IN
 	wc.cbClsExtra = 0;
 	wc.cbWndExtra = 0;	//cb... - Count Bytes
 
-	wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-	wc.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
-	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+	wc.hIcon = (HICON)LoadImage(NULL,"ico\\bitcoin.ico",IMAGE_ICON,LR_DEFAULTSIZE,LR_DEFAULTSIZE,LR_LOADFROMFILE);
+	wc.hIconSm = (HICON)LoadImage(NULL,"ico\\doom.ico",IMAGE_ICON,LR_DEFAULTSIZE,LR_DEFAULTSIZE,LR_LOADFROMFILE);
+	//wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+	//wc.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
+	//wc.hCursor = LoadCursor(hInstance, MAKEINTRESOURCE(IDC_CURSOR1));
+	wc.hCursor = (HCURSOR)LoadImage(hInstance, "cursor\\w3-undead\\HELP.ani",
+		IMAGE_CURSOR,
+		LR_DEFAULTSIZE,
+		LR_DEFAULTSIZE,
+		LR_LOADFROMFILE
+	);
 	wc.hbrBackground = (HBRUSH)COLOR_WINDOW;
+
 
 	wc.hInstance = hInstance;
 	wc.lpszMenuName = NULL;
@@ -42,10 +51,10 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst, LPSTR lpCmdLine, IN
 
 	printf("Screen:\t %ix%i;\n", screen_width, screen_heght);
 
-	INT window_width = screen_width * 3 / 4;
-	INT window_heght = screen_heght * .75;
+	INT window_width = screen_width * 1.7/ 4;
+	INT window_heght = screen_heght * .55;
 	printf("Window:\t %ix%i;\n", window_width, window_heght);
-	INT window_start_x = screen_width / 8;
+	INT window_start_x = screen_width / 2;
 	INT window_start_y = screen_heght / 8;
 	printf("Location:\t %ix%i;\n", window_start_x, window_start_y);
 
