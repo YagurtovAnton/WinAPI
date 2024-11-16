@@ -17,6 +17,16 @@
 #define IDC_BATTON_8				1008
 #define IDC_BATTON_9				1009
 
+#define IDC_BATTON_POINT			1010
+#define IDC_BATTON_PLUS				1011
+#define IDC_BATTON_MINUS			1012
+#define IDC_BATTON_ASTER			1013
+#define IDC_BATTON_SLAH				1014
+
+#define IDC_BATTON_BSP				1015
+#define IDC_BATTON_CLEAR			1016
+#define IDC_BATTON_EQUAL			1017
+
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
