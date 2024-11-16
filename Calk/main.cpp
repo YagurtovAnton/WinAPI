@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include<Windows.h>
 #include"resource.h"
 
@@ -87,7 +88,7 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		HWND hEdit = CreateWindowEx
 		(
 			NULL, "Edit", "",
-			WS_CHILD | WS_VISIBLE | WS_BORDER,
+			WS_CHILD | WS_VISIBLE | WS_BORDER|ES_RIGHT,
 			10, 10,
 			g_i_DISPLAY_WIDTH,g_i_DISPLAY_HEIGHT,
 			hwnd,
@@ -111,7 +112,7 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					g_i_BUTTON_START_Y + (g_i_BUTTON_SIZE + g_i_INTERVAL) * (2 - i / 3),
 					g_i_BUTTON_SIZE, g_i_BUTTON_SIZE,
 					hwnd,
-					(HMENU)IDC_BATTON_1 + i + j,
+					(HMENU)(IDC_BATTON_1 + i + j),
 					GetModuleHandle(NULL),
 					NULL
 				);
@@ -199,6 +200,29 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 	break;
 	case WM_COMMAND:
+	{
+		CONST INT SIZE = 256;
+		CHAR sz_display[SIZE]{};
+		CHAR sz_digit[2] = {};
+		HWND hEditDisplay = GetDlgItem(hwnd, IDC_EDIT_DISPLAY);
+		if (LOWORD(wParam) >= IDC_BATTON_0 && LOWORD(wParam) <= IDC_BATTON_9)
+		{
+			SendMessage(hEditDisplay, WM_GETTEXT, SIZE, (LPARAM)sz_display);
+			
+			sz_digit[0] = LOWORD(wParam) - IDC_BATTON_0 + '0';
+			if (strlen(sz_display) == 1 && sz_display[0] == '0')
+				sz_display[0] = sz_digit[0];
+			else
+				strcat(sz_display, sz_digit);
+			SendMessage(hEditDisplay, WM_SETTEXT, 0, (LPARAM)sz_display);
+		}
+		if (LOWORD(wParam) == IDC_BATTON_POINT)
+			{
+				if(strchr(sz_display,'.'))break;
+				strcat(sz_display, ".");
+			SendMessage(hEditDisplay, WM_SETTEXT, 0, (LPARAM)sz_display);
+			}
+	}
 		break;
 
 	case WM_DESTROY:
