@@ -1,6 +1,8 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include<Windows.h>
+#include<iostream>
 #include"resource.h"
+
 
 CONST CHAR g_sz_CLASS_NAME[] = "Calc PV_319";
 
@@ -8,7 +10,7 @@ CONST INT g_i_BUTTON_SIZE = 50;
 CONST INT g_i_INTERVAL = 5;
 CONST INT g_i_BUTTON_DOUBLE_SIZE = g_i_BUTTON_SIZE * 2 + g_i_INTERVAL;
 
-CONST INT g_i_DISPLAY_WIDTH = g_i_BUTTON_SIZE * 5 + g_i_INTERVAL*4;
+CONST INT g_i_DISPLAY_WIDTH = g_i_BUTTON_SIZE * 5 + g_i_INTERVAL * 4;
 CONST INT g_i_DISPLAY_HEIGHT = 22;
 
 CONST INT g_i_START_X = 10;
@@ -20,8 +22,8 @@ CONST INT g_i_OPERETION_BUTTON_START_Y = g_i_BUTTON_START_Y;
 CONST INT g_i_CONTROL_BUTTON_START_X = g_i_START_X + (g_i_BUTTON_SIZE + g_i_INTERVAL) * 4;
 CONST INT g_i_CONTROL_BUTTON_START_Y = g_i_BUTTON_START_Y;
 
-CONST INT g_i_WINDOW_WIDTH = g_i_DISPLAY_WIDTH + g_i_START_X * 2+16;
-CONST INT g_i_WINDOW_HEIGHT = g_i_DISPLAY_HEIGHT + g_i_START_Y * 2 + (g_i_BUTTON_SIZE + g_i_INTERVAL) * 4+38;
+CONST INT g_i_WINDOW_WIDTH = g_i_DISPLAY_WIDTH + g_i_START_X * 2 + 16;
+CONST INT g_i_WINDOW_HEIGHT = g_i_DISPLAY_HEIGHT + g_i_START_Y * 2 + (g_i_BUTTON_SIZE + g_i_INTERVAL) * 4 + 38;
 CONST CHAR* g_OPERATIONS[] = { "+","-","*","/" };
 
 INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -59,7 +61,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPevInst, LPSTR lpCmdLine, INT
 		NULL,
 		g_sz_CLASS_NAME,
 		g_sz_CLASS_NAME,
-		WS_OVERLAPPEDWINDOW^WS_THICKFRAME^WS_MAXIMIZEBOX,
+		WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME ^ WS_MAXIMIZEBOX,
 		CW_USEDEFAULT, CW_USEDEFAULT,
 		g_i_WINDOW_WIDTH, g_i_WINDOW_HEIGHT,
 		NULL,
@@ -85,12 +87,14 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 	case WM_CREATE:
 	{
+		AllocConsole();
+		freopen("CONOUT$", "w", stdout);
 		HWND hEdit = CreateWindowEx
 		(
 			NULL, "Edit", "",
-			WS_CHILD | WS_VISIBLE | WS_BORDER|ES_RIGHT,
+			WS_CHILD | WS_VISIBLE | WS_BORDER | ES_RIGHT,
 			10, 10,
-			g_i_DISPLAY_WIDTH,g_i_DISPLAY_HEIGHT,
+			g_i_DISPLAY_WIDTH, g_i_DISPLAY_HEIGHT,
 			hwnd,
 			(HMENU)IDC_EDIT_DISPLAY,
 			GetModuleHandle(NULL),
@@ -177,7 +181,7 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			NULL, "Button", "C",
 			WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
 			g_i_CONTROL_BUTTON_START_X,
-			g_i_CONTROL_BUTTON_START_Y+g_i_BUTTON_SIZE+g_i_INTERVAL,
+			g_i_CONTROL_BUTTON_START_Y + g_i_BUTTON_SIZE + g_i_INTERVAL,
 			g_i_BUTTON_SIZE, g_i_BUTTON_SIZE,
 			hwnd,
 			(HMENU)IDC_BATTON_CLEAR,
@@ -189,7 +193,7 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			NULL, "Button", "=",
 			WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
 			g_i_CONTROL_BUTTON_START_X,
-			g_i_CONTROL_BUTTON_START_Y+ (g_i_BUTTON_SIZE+g_i_INTERVAL)*2,
+			g_i_CONTROL_BUTTON_START_Y + (g_i_BUTTON_SIZE + g_i_INTERVAL) * 2,
 			g_i_BUTTON_SIZE, g_i_BUTTON_DOUBLE_SIZE,
 			hwnd,
 			(HMENU)IDC_BATTON_EQUAL,
@@ -205,10 +209,10 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		CHAR sz_display[SIZE]{};
 		CHAR sz_digit[2] = {};
 		HWND hEditDisplay = GetDlgItem(hwnd, IDC_EDIT_DISPLAY);
+		SendMessage(hEditDisplay, WM_GETTEXT, SIZE, (LPARAM)sz_display);
 		if (LOWORD(wParam) >= IDC_BATTON_0 && LOWORD(wParam) <= IDC_BATTON_9)
 		{
-			SendMessage(hEditDisplay, WM_GETTEXT, SIZE, (LPARAM)sz_display);
-			
+
 			sz_digit[0] = LOWORD(wParam) - IDC_BATTON_0 + '0';
 			if (strlen(sz_display) == 1 && sz_display[0] == '0')
 				sz_display[0] = sz_digit[0];
@@ -217,13 +221,39 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			SendMessage(hEditDisplay, WM_SETTEXT, 0, (LPARAM)sz_display);
 		}
 		if (LOWORD(wParam) == IDC_BATTON_POINT)
-			{
-				if(strchr(sz_display,'.'))break;
-				strcat(sz_display, ".");
+		{
+			if (strchr(sz_display, '.'))break;
+			strcat(sz_display, ".");
 			SendMessage(hEditDisplay, WM_SETTEXT, 0, (LPARAM)sz_display);
-			}
+		}
+		//if (LOWORD(wParam) == IDC_EDIT_DISPLAY && HIWORD(wParam)==EN_SETFOCUS)SetFocus(hwnd);
+		if (LOWORD(wParam) == IDC_BATTON_BSP)
+		{
+			if (strlen(sz_display) == 1)sz_display[0] = '0';
+			else sz_display[strlen(sz_display) - 1] = 0;
+			SendMessage(hEditDisplay, WM_SETTEXT, 0, (LPARAM)sz_display);
+		}
+
+		if (LOWORD(wParam) == IDC_BATTON_CLEAR)
+		{
+			SendMessage(hEditDisplay, WM_SETTEXT, 0, (LPARAM)"0");
+		}
+		SetFocus(hwnd);
 	}
-		break;
+	break;
+	case WM_KEYDOWN:
+	{
+		if (wParam >= 0x30 && wParam <= 0x39)
+			SendMessage(hwnd, WM_COMMAND, wParam - 0x30 + IDC_BATTON_0, 0);
+		switch (wParam)
+		{
+		case	VK_OEM_PERIOD:	 SendMessage(hwnd, WM_COMMAND, LOWORD(IDC_BATTON_POINT), 0); break;
+		case	VK_ESCAPE:		 SendMessage(hwnd, WM_COMMAND, LOWORD(IDC_BATTON_CLEAR), 0); break;
+		case	VK_BACK:		 SendMessage(hwnd, WM_COMMAND, LOWORD(IDC_BATTON_BSP), 0); break;
+		}
+	}
+	break;
+
 
 	case WM_DESTROY:
 		PostQuitMessage(0);
