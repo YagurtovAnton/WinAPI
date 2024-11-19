@@ -83,6 +83,11 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPevInst, LPSTR lpCmdLine, INT
 }
 INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	static DOUBLE a = DBL_MIN;
+	static DOUBLE b = DBL_MIN;
+	static INT operatoin;
+	static BOOL input = FALSE;
+	static BOOL input_opeatoin = FALSE;
 	switch (uMsg)
 	{
 	case WM_CREATE:
@@ -203,6 +208,7 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	}
 	break;
+
 	case WM_COMMAND:
 	{
 		CONST INT SIZE = 256;
@@ -212,6 +218,7 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SendMessage(hEditDisplay, WM_GETTEXT, SIZE, (LPARAM)sz_display);
 		if (LOWORD(wParam) >= IDC_BATTON_0 && LOWORD(wParam) <= IDC_BATTON_9)
 		{
+			if (input_opeatoin)sz_display[0] = 0;
 
 			sz_digit[0] = LOWORD(wParam) - IDC_BATTON_0 + '0';
 			if (strlen(sz_display) == 1 && sz_display[0] == '0')
@@ -219,6 +226,9 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			else
 				strcat(sz_display, sz_digit);
 			SendMessage(hEditDisplay, WM_SETTEXT, 0, (LPARAM)sz_display);
+
+			input = TRUE;
+			input_opeatoin = FALSE;
 		}
 		if (LOWORD(wParam) == IDC_BATTON_POINT)
 		{
@@ -233,23 +243,53 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			else sz_display[strlen(sz_display) - 1] = 0;
 			SendMessage(hEditDisplay, WM_SETTEXT, 0, (LPARAM)sz_display);
 		}
-
 		if (LOWORD(wParam) == IDC_BATTON_CLEAR)
 		{
+			a = b = DBL_MIN;
+			operatoin = 0;
+			input = FALSE;
+			input_opeatoin = FALSE;
 			SendMessage(hEditDisplay, WM_SETTEXT, 0, (LPARAM)"0");
+		} 
+		if (LOWORD(wParam) >= IDC_BATTON_PLUS && LOWORD(wParam) <= IDC_BATTON_SLAH)
+		{
+			//SendMessage(hEditDisplay, WM_GETTEXT, SIZE, (LPARAM)sz_display);
+			if (a == DBL_MIN)a = atof(sz_display);
+			//input = FALSE;
+			SendMessage(hwnd, WM_COMMAND, LOWORD(IDC_BATTON_EQUAL), 0);
+			operatoin = LOWORD(wParam);
+			input_opeatoin = TRUE;
+		}
+		if (LOWORD(wParam) == IDC_BATTON_EQUAL)
+		{
+			if (input)b = atof(sz_display);
+			input = FALSE;
+			switch (operatoin)
+			{
+			case IDC_BATTON_PLUS:	a += b; break;
+			case IDC_BATTON_MINUS:	a -= b; break;
+			case IDC_BATTON_ASTER:	a *= b; break;
+			case IDC_BATTON_SLAH:	a /= b; break;
+			}
+			input_opeatoin = FALSE;
+			if (a == DBL_MIN)strcpy(sz_display, "0");
+			sprintf(sz_display, "%g", a);
+			SendMessage(hEditDisplay, WM_SETTEXT, 0, (LPARAM)sz_display);
 		}
 		SetFocus(hwnd);
 	}
 	break;
 	case WM_KEYDOWN:
 	{
-		if (wParam >= 0x30 && wParam <= 0x39)
-			SendMessage(hwnd, WM_COMMAND, wParam - 0x30 + IDC_BATTON_0, 0);
-		if (wParam>= 0x60 && wParam <= 0x69)
+	//	if (wParam >= 0x30 && wParam <= 0x39)
+		//	SendMessage(hwnd, WM_COMMAND, wParam - 0x30 + IDC_BATTON_0, 0);
+		if (wParam >= '0' && wParam <= '9')
+			SendMessage(hwnd, WM_COMMAND, wParam - '0' + IDC_BATTON_0, 0);
+		if (wParam >= 0x60 && wParam <= 0x69)
 			SendMessage(hwnd, WM_COMMAND, wParam - 0x60 + IDC_BATTON_0, 0);
 		switch (wParam)
 		{
-		case VK_DECIMAL:
+		case	VK_DECIMAL:
 		case	VK_OEM_PERIOD:	 SendMessage(hwnd, WM_COMMAND, LOWORD(IDC_BATTON_POINT), 0); break;
 		case	VK_ESCAPE:		 SendMessage(hwnd, WM_COMMAND, LOWORD(IDC_BATTON_CLEAR), 0); break;
 		case	VK_BACK:		 SendMessage(hwnd, WM_COMMAND, LOWORD(IDC_BATTON_BSP), 0); break;
