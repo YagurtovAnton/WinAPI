@@ -107,8 +107,7 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		);
 
 		CHAR sz_digit[2] = "0";
-		for (int i = 6
-			; i >= 0; i -= 3)
+		for (int i = 6; i >= 0; i -= 3)
 		{
 			for (int j = 0; j < 3; j++)
 			{
@@ -162,7 +161,7 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				g_i_BUTTON_START_Y + (g_i_BUTTON_SIZE + g_i_INTERVAL) * (3 - i),
 				g_i_BUTTON_SIZE, g_i_BUTTON_SIZE,
 				hwnd,
-				(HMENU)IDC_BATTON_PLUS,
+				(HMENU)(IDC_BATTON_PLUS + i),
 				GetModuleHandle(NULL),
 				NULL
 			);
@@ -218,7 +217,13 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SendMessage(hEditDisplay, WM_GETTEXT, SIZE, (LPARAM)sz_display);
 		if (LOWORD(wParam) >= IDC_BATTON_0 && LOWORD(wParam) <= IDC_BATTON_9)
 		{
-			if (input_opeatoin)sz_display[0] = 0;
+			if (!input && !input_opeatoin)
+			{
+				SendMessage(hwnd, WM_COMMAND, LOWORD(IDC_BATTON_CLEAR), 0);
+				//ZeroMemory(sz_display, SIZE);
+				sz_display[0] = 0;
+			}
+			if (!input && input_opeatoin)sz_display[0] = 0;
 
 			sz_digit[0] = LOWORD(wParam) - IDC_BATTON_0 + '0';
 			if (strlen(sz_display) == 1 && sz_display[0] == '0')
@@ -228,7 +233,7 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			SendMessage(hEditDisplay, WM_SETTEXT, 0, (LPARAM)sz_display);
 
 			input = TRUE;
-			input_opeatoin = FALSE;
+		//	input_opeatoin = FALSE;
 		}
 		if (LOWORD(wParam) == IDC_BATTON_POINT)
 		{
@@ -249,6 +254,7 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			operatoin = 0;
 			input = FALSE;
 			input_opeatoin = FALSE;
+			sz_display[0] = 0;
 			SendMessage(hEditDisplay, WM_SETTEXT, 0, (LPARAM)"0");
 		} 
 		if (LOWORD(wParam) >= IDC_BATTON_PLUS && LOWORD(wParam) <= IDC_BATTON_SLAH)
@@ -256,13 +262,13 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			//SendMessage(hEditDisplay, WM_GETTEXT, SIZE, (LPARAM)sz_display);
 			if (a == DBL_MIN)a = atof(sz_display);
 			//input = FALSE;
-			SendMessage(hwnd, WM_COMMAND, LOWORD(IDC_BATTON_EQUAL), 0);
+			if(input_opeatoin)SendMessage(hwnd, WM_COMMAND, LOWORD(IDC_BATTON_EQUAL), 0);
 			operatoin = LOWORD(wParam);
 			input_opeatoin = TRUE;
 		}
 		if (LOWORD(wParam) == IDC_BATTON_EQUAL)
 		{
-			if (input)b = atof(sz_display);
+			if (input || b == DBL_MIN && !input)b = atof(sz_display);
 			input = FALSE;
 			switch (operatoin)
 			{
@@ -273,7 +279,7 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			input_opeatoin = FALSE;
 			if (a == DBL_MIN)strcpy(sz_display, "0");
-			sprintf(sz_display, "%g", a);
+			else sprintf(sz_display, "%g", a);
 			SendMessage(hEditDisplay, WM_SETTEXT, 0, (LPARAM)sz_display);
 		}
 		SetFocus(hwnd);
@@ -281,6 +287,10 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	break;
 	case WM_KEYDOWN:
 	{
+		if (GetKeyState(VK_SHIFT) < 0)
+		{
+			if (wParam == 0x30)SendMessage(hwnd, WM_COMMAND, IDC_BATTON_ASTER, 0);
+		}
 	//	if (wParam >= 0x30 && wParam <= 0x39)
 		//	SendMessage(hwnd, WM_COMMAND, wParam - 0x30 + IDC_BATTON_0, 0);
 		if (wParam >= '0' && wParam <= '9')
@@ -289,10 +299,14 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			SendMessage(hwnd, WM_COMMAND, wParam - 0x60 + IDC_BATTON_0, 0);
 		switch (wParam)
 		{
+		case	VK_OEM_PLUS:	 SendMessage(hwnd, WM_COMMAND, LOWORD(IDC_BATTON_PLUS), 0); break;
+		case	VK_OEM_MINUS:	 SendMessage(hwnd, WM_COMMAND, LOWORD(IDC_BATTON_MINUS), 0); break;
+		case	VK_OEM_2:		 SendMessage(hwnd, WM_COMMAND, LOWORD(IDC_BATTON_SLAH), 0); break;
 		case	VK_DECIMAL:
 		case	VK_OEM_PERIOD:	 SendMessage(hwnd, WM_COMMAND, LOWORD(IDC_BATTON_POINT), 0); break;
-		case	VK_ESCAPE:		 SendMessage(hwnd, WM_COMMAND, LOWORD(IDC_BATTON_CLEAR), 0); break;
 		case	VK_BACK:		 SendMessage(hwnd, WM_COMMAND, LOWORD(IDC_BATTON_BSP), 0); break;
+		case	VK_ESCAPE:		 SendMessage(hwnd, WM_COMMAND, LOWORD(IDC_BATTON_CLEAR), 0); break;
+		case	VK_RETURN:		 SendMessage(hwnd, WM_COMMAND, LOWORD(IDC_BATTON_EQUAL), 0); break;
 		}
 	}
 	break;
