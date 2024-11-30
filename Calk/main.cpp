@@ -10,8 +10,11 @@ CONST INT g_i_BUTTON_SIZE = 50;
 CONST INT g_i_INTERVAL = 5;
 CONST INT g_i_BUTTON_DOUBLE_SIZE = g_i_BUTTON_SIZE * 2 + g_i_INTERVAL;
 
+CONST INT g_i_FONT_HEIGHT = 32;
+CONST INT g_i_FONT_WIDTH = g_i_FONT_HEIGHT * 2 / 5;
+
 CONST INT g_i_DISPLAY_WIDTH = g_i_BUTTON_SIZE * 5 + g_i_INTERVAL * 4;
-CONST INT g_i_DISPLAY_HEIGHT = 22;
+CONST INT g_i_DISPLAY_HEIGHT = g_i_FONT_HEIGHT + 2;
 
 CONST INT g_i_START_X = 10;
 CONST INT g_i_START_Y = 10;
@@ -26,7 +29,7 @@ CONST INT g_i_WINDOW_WIDTH = g_i_DISPLAY_WIDTH + g_i_START_X * 2 + 16;
 CONST INT g_i_WINDOW_HEIGHT = g_i_DISPLAY_HEIGHT + g_i_START_Y * 2 + (g_i_BUTTON_SIZE + g_i_INTERVAL) * 4 + 38;
 CONST CHAR* g_OPERATIONS[] = { "+","-","*","/" };
 
-INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 VOID  SetSkin(HWND hwnd, CONST CHAR* skin);
 
 INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPevInst, LPSTR lpCmdLine, INT nCmdShow)
@@ -81,7 +84,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPevInst, LPSTR lpCmdLine, INT
 
 	return msg.wParam;
 }
-INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	static DOUBLE a = DBL_MIN;
 	static DOUBLE b = DBL_MIN;
@@ -105,6 +108,24 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			GetModuleHandle(NULL),
 			NULL
 		);
+		AddFontResourceEx("Fonts\\Calculator.ttf", FR_PRIVATE, 0);
+		HFONT hFont = CreateFont
+		(
+			g_i_FONT_HEIGHT, g_i_FONT_WIDTH,
+			0,			//Escapement - Наклон шрифта в десятках градусов
+			0,			//Orientation - ???
+			FW_BOLD,	//Weight - Толщина
+			FALSE,		//Italic - Курсив
+			FALSE,		//Underline-Подчеркнутый
+			FALSE,		//Strikeout - Перечеркнутый
+			ANSI_CHARSET,
+			OUT_TT_PRECIS,
+			CLIP_TT_ALWAYS,
+			ANTIALIASED_QUALITY,
+			FF_DONTCARE,
+			"Calculator"
+		);
+		SendMessage(hEdit, WM_SETFONT, (WPARAM)hFont, TRUE);
 		//TODO:	Button Icons.
 
 		CHAR sz_digit[2] = "0";
@@ -220,6 +241,19 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 	break;
 
+	case WM_CTLCOLOREDIT:
+	{
+		HDC hdc = (HDC)wParam;
+		HWND hEdit = (HWND)lParam;
+		if (GetDlgCtrlID(hEdit) == IDC_EDIT_DISPLAY)
+		{
+			SetTextColor(hdc, RGB(255, 0, 0));
+			SetBkColor(hdc, RGB(0, 0, 100));
+			HBRUSH hbrBackground = CreateSolidBrush(RGB(30, 30, 30));
+			return (INT_PTR)hbrBackground;
+		}
+	}
+
 	case WM_COMMAND:
 	{
 		CONST INT SIZE = 256;
@@ -229,13 +263,14 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SendMessage(hEditDisplay, WM_GETTEXT, SIZE, (LPARAM)sz_display);
 		if (LOWORD(wParam) >= IDC_BUTTON_0 && LOWORD(wParam) <= IDC_BUTTON_9)
 		{
+			//TODO ,,,,,,,,,,,,,,,,,,,,,,,,,,,
 			if (!input && !input_opeatoin)
 			{
 				SendMessage(hwnd, WM_COMMAND, LOWORD(IDC_BUTTON_CLR), 0);
 				//ZeroMemory(sz_display, SIZE);
 				sz_display[0] = 0;
 			}
-			if (!input && input_opeatoin)sz_display[0] = 0;
+			if (!input && input_opeatoin/* && !strchr(sz_display, '.')*/)sz_display[0] = 0;
 
 			sz_digit[0] = LOWORD(wParam) - IDC_BUTTON_0 + '0';
 			if (strlen(sz_display) == 1 && sz_display[0] == '0')
@@ -249,9 +284,13 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		if (LOWORD(wParam) == IDC_BUTTON_POINT)
 		{
-			if (strchr(sz_display, '.'))break;
-			strcat(sz_display, ".");
+			if (strchr(sz_display, '.')&& input)break;
+			if (input_opeatoin && a == atof(sz_display))strcpy(sz_display, "0");
+			else strcat(sz_display, ".");
 			SendMessage(hEditDisplay, WM_SETTEXT, 0, (LPARAM)sz_display);
+			strcat(sz_display, ".");
+			input = TRUE;
+			//input = TRUE;
 		}
 		//if (LOWORD(wParam) == IDC_EDIT_DISPLAY && HIWORD(wParam)==EN_SETFOCUS)SetFocus(hwnd);
 		if (LOWORD(wParam) == IDC_BUTTON_BSP)
@@ -297,19 +336,64 @@ INT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SetFocus(hwnd);
 	}
 	break;
+	//ClassWork
+	//1 при нажатие выбора темы закрыватся/завершается  калькулятор
 	case WM_KEYDOWN:
+	{
+		if (GetKeyState(VK_SHIFT< 0))
+		{
+			if (wParam == 0x38)SendMessage(GetDlgItem(hwnd, IDC_BUTTON_ASTER), BM_SETSTATE, TRUE, 0);
+			
+		}
+		else if (wParam >= '0' && wParam <= '9')
+		{
+			SendMessage(GetDlgItem(hwnd, wParam - '0' + IDC_BUTTON_0), BM_SETSTATE, TRUE, 0);
+		}
+		else if (wParam > 0x60 && wParam <= 0x69)
+		{
+			SendMessage(GetDlgItem(hwnd, wParam - 0x60 + IDC_BUTTON_0), BM_SETSTATE, TRUE, 0);
+		}
+		switch (wParam)
+		{
+			case VK_ADD:
+			case VK_OEM_PLUS:
+				SendMessage(GetDlgItem(hwnd, IDC_BUTTON_PLUS), BM_SETSTATE, TRUE, 0);break;
+			case VK_SUBTRACT:
+			case VK_OEM_MINUS:
+				SendMessage(GetDlgItem(hwnd, IDC_BUTTON_MINUS), BM_SETSTATE, TRUE, 0);break;
+			case VK_MULTIPLY:
+				SendMessage(GetDlgItem(hwnd, IDC_BUTTON_ASTER), BM_SETSTATE, TRUE, 0);break;
+			case VK_DIVIDE:
+			case VK_OEM_2:
+				SendMessage(GetDlgItem(hwnd, IDC_BUTTON_SLAH), BM_SETSTATE,  TRUE, 0);break;
+			case VK_DECIMAL:
+			case VK_OEM_PERIOD:
+				SendMessage(GetDlgItem(hwnd, IDC_BUTTON_POINT), BM_SETSTATE, TRUE, 0);
+		}
+		
+	}
+		break;
+	case WM_KEYUP:
 	{
 		if (GetKeyState(VK_SHIFT) < 0)
 		{
-			if (wParam == 0x30)SendMessage(hwnd, WM_COMMAND, IDC_BUTTON_ASTER, 0);
+			if (wParam == 0x38)
+			{
+				SendMessage(GetDlgItem(hwnd, IDC_BUTTON_ASTER), BM_SETSTATE, FALSE, 0);
+				SendMessage(hwnd, WM_COMMAND, IDC_BUTTON_ASTER, 0);
+			}
 		}
 	//	if (wParam >= 0x30 && wParam <= 0x39)
 		//	SendMessage(hwnd, WM_COMMAND, wParam - 0x30 + IDC_BUTTON_0, 0);
-		if (wParam >= '0' && wParam <= '9')
+		else if (wParam >= '0' && wParam <= '9')
+		{
+			SendMessage(GetDlgItem(hwnd, wParam - '0' + IDC_BUTTON_0), BM_SETSTATE, FALSE, 0);
 			SendMessage(hwnd, WM_COMMAND, wParam - '0' + IDC_BUTTON_0, 0);
-		if (wParam >= 0x60 && wParam <= 0x69)
+		}
+		else if (wParam >= 0x60 && wParam <= 0x69)
+			SendMessage(GetDlgItem(hwnd, wParam - 0x60 + IDC_BUTTON_0), BM_SETSTATE, FALSE, 0);
 			SendMessage(hwnd, WM_COMMAND, wParam - 0x60 + IDC_BUTTON_0, 0);
-		switch (wParam)
+	switch (wParam)
 		{
 		case	VK_ADD:
 		case	VK_OEM_PLUS:	 SendMessage(hwnd, WM_COMMAND, LOWORD(IDC_BUTTON_PLUS), 0); break;
