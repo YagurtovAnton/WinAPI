@@ -29,6 +29,10 @@ CONST INT g_i_WINDOW_WIDTH = g_i_DISPLAY_WIDTH + g_i_START_X * 2 + 16;
 CONST INT g_i_WINDOW_HEIGHT = g_i_DISPLAY_HEIGHT + g_i_START_Y * 2 + (g_i_BUTTON_SIZE + g_i_INTERVAL) * 4 + 38;
 CONST CHAR* g_OPERATIONS[] = { "+","-","*","/" };
 
+CONST COLORREF g_DISPLAY_BACKGROUND[] = { RGB(0, 0, 100), RGB(0,  50, 0) };
+CONST COLORREF g_DISPLAY_FOREGROUND[] = { RGB(255, 0, 0), RGB(0, 255, 0) };
+CONST COLORREF g_WINDOW_BACKGROUND[] = { RGB(0, 0, 150), RGB(75,  75, 75) };
+
 LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 VOID  SetSkin(HWND hwnd, CONST CHAR* skin);
 
@@ -47,6 +51,8 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPevInst, LPSTR lpCmdLine, INT
 	wClass.hIconSm = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1));
 	wClass.hCursor = LoadCursor(hInstance, IDC_ARROW);
 	wClass.hbrBackground = (HBRUSH)COLOR_WINDOW;
+	HBITMAP hBackground = (HBITMAP)LoadImage(hInstance, "Picture\\wolf.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+	wClass.hbrBackground = CreatePatternBrush(hBackground);
 
 	wClass.hInstance = hInstance;
 	wClass.lpszClassName = g_sz_CLASS_NAME;
@@ -91,6 +97,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	static INT operatoin;
 	static BOOL input = FALSE;
 	static BOOL input_opeatoin = FALSE;
+
+	static INT color_index = 0;
+
 	switch (uMsg)
 	{
 	case WM_CREATE:
@@ -247,10 +256,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		HWND hEdit = (HWND)lParam;
 		if (GetDlgCtrlID(hEdit) == IDC_EDIT_DISPLAY)
 		{
-			SetTextColor(hdc, RGB(255, 0, 0));
-			SetBkColor(hdc, RGB(0, 0, 100));
-			HBRUSH hbrBackground = CreateSolidBrush(RGB(30, 30, 30));
-			return (INT_PTR)hbrBackground;
+			//SetBkMode(hdc, OPAQUE);
+			SetTextColor(hdc, g_DISPLAY_FOREGROUND[color_index]);
+			SetBkColor(hdc, g_DISPLAY_BACKGROUND[color_index]);
+
+			HBRUSH hbrBackground = CreateSolidBrush(g_WINDOW_BACKGROUND[color_index]);
+			SetClassLongPtr(hwnd, GCLP_HBRBACKGROUND, (LONG)hbrBackground);
+			SendMessage(hwnd, WM_ERASEBKGND, wParam, 0);
+			return (LRESULT)hbrBackground;
 		}
 	}
 
@@ -285,11 +298,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (LOWORD(wParam) == IDC_BUTTON_POINT)
 		{
 			if (strchr(sz_display, '.')&& input)break;
-			if (input_opeatoin && a == atof(sz_display))strcpy(sz_display, "0");
+			if (input_opeatoin && a == atof(sz_display))strcpy(sz_display, "0.");
 			else strcat(sz_display, ".");
 			SendMessage(hEditDisplay, WM_SETTEXT, 0, (LPARAM)sz_display);
-			strcat(sz_display, ".");
 			input = TRUE;
+			strcat(sz_display, ".");
 			//input = TRUE;
 		}
 		//if (LOWORD(wParam) == IDC_EDIT_DISPLAY && HIWORD(wParam)==EN_SETFOCUS)SetFocus(hwnd);
@@ -412,6 +425,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	break;
 	case WM_CONTEXTMENU:
 	{
+
 		HMENU hSubmenuSkins = CreatePopupMenu();
 		InsertMenu(hSubmenuSkins, 0, MF_BYPOSITION | MF_STRING, IDR_METAL_MISTRAL, "Metal Mistral");
 		InsertMenu(hSubmenuSkins, 0, MF_BYPOSITION | MF_STRING, IDR_SQUARE_BLUE, "Square Blue");
@@ -420,15 +434,25 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		InsertMenu(hMenu, 0, MF_BYPOSITION | MF_POPUP, (UINT_PTR)hSubmenuSkins, "Skins");
 		InsertMenu(hMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, 0);
 		InsertMenu(hMenu, 2, MF_BYPOSITION | MF_STRING, IDR_EXIT, "Exit");
-
-		switch (TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_BOTTOMALIGN | TPM_RETURNCMD, LOWORD(lParam), HIWORD(lParam), 0, hwnd, 0))
+		BOOL skin_index = TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_BOTTOMALIGN | TPM_RETURNCMD, LOWORD(lParam), HIWORD(lParam), 0, hwnd, 0);
+		switch (skin_index)
 		{
-		case IDR_SQUARE_BLUE:	SetSkin(hwnd, "square_blue"); break;
-		case IDR_METAL_MISTRAL:	SetSkin(hwnd, "metal_mistral"); break;
+		case IDR_SQUARE_BLUE:	SetSkin(hwnd, "square_blue");	break;
+		case IDR_METAL_MISTRAL: SetSkin(hwnd, "metal_mistral"); break;
 		case IDR_EXIT:			DestroyWindow(hwnd);
 		}
 		DestroyMenu(hSubmenuSkins);
 		DestroyMenu(hMenu);
+
+		color_index = skin_index - IDR_CONTEXT_MENU - 1;
+		HWND hEditDisplay = GetDlgItem(hwnd, IDC_EDIT_DISPLAY);
+		HDC hdcDisplay = GetDC(hEditDisplay);
+		SendMessage(hwnd, WM_CTLCOLOREDIT, (WPARAM)hdcDisplay, (LPARAM)hEditDisplay);
+		ReleaseDC(hEditDisplay, hdcDisplay);
+
+		CHAR sz_buffer[MAX_PATH]{};
+		SendMessage(hEditDisplay, WM_GETTEXT, MAX_PATH, (LPARAM)sz_buffer);
+		SendMessage(hEditDisplay, WM_SETTEXT, 0, (LPARAM)sz_buffer);
 	}
 
 	case WM_DESTROY:
@@ -497,8 +521,8 @@ VOID SetSkin(HWND hwnd, CONST CHAR* skin)
 		(
 			GetModuleHandle(NULL),
 			sz_filename,
-			//"ButtonBMP\\square_blue\\button_0.bmp",
 			IMAGE_BITMAP,
+			//"ButtonBMP\\square_blue\\button_0.bmp
 			i + IDC_BUTTON_0 == IDC_BUTTON_0 ? g_i_BUTTON_DOUBLE_SIZE : g_i_BUTTON_SIZE,
 			i + IDC_BUTTON_0 == IDC_BUTTON_EQUAL ? g_i_BUTTON_DOUBLE_SIZE : g_i_BUTTON_SIZE,
 			LR_LOADFROMFILE
